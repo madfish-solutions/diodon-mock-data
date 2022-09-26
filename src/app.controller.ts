@@ -49,7 +49,7 @@ const mockMarketsData = [
     fundingRateChange8Percent: 0.0088,
   },
   {
-    marketId: 'APPL',
+    marketId: 'AAPL',
     marketPriceUsd: 156.74,
     marketPriceChange24Usd: 2.27,
     indexPriceUsd: 156.6,
@@ -97,7 +97,7 @@ const mockMarketTicks = {
       fundingRatePercent: 0.08,
     },
   ],
-  APPL: [
+  AAPL: [
     {
       timestamp: 1662912000000,
       marketPriceUsd: 154.47,
