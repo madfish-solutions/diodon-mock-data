@@ -161,7 +161,17 @@ export class AppController {
 
   @Get('/api/v1/markets')
   async getMarkets() {
-    return await this.appService.getMarkets();
+    const partialMarkets = await this.appService.getMarkets();
+
+    return partialMarkets.map((marketData) => ({
+      volume24Usd:
+        Number(marketData.volume24Tokens) * Number(marketData.marketPriceUsd),
+      fundingRateChange8Percent: 0.0088,
+      indexPriceUsd: Number(marketData.marketPriceUsd) * 1.01,
+      marketPriceChange24Usd: 0.02,
+      indexPriceChange24Usd: 0.01,
+      ...marketData,
+    }));
   }
 
   @Get('/api/v1/account')
