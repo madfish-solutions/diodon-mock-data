@@ -5,24 +5,21 @@ import { AppService } from './app.service';
 const mockAccountData = {
   netCollateralTokens: 6000,
   netCollateralUsd: 6006,
-  freeCollateralTokens: 400,
-  freeCollateralUsd: 400.4,
-  marginRatioPercent: 31.2,
-  leverage: 3.205,
-  buyingPowerUsd: 4004,
+  openedPositionsTokens: 6000,
+  openedPositionsUsd: 6006,
 };
 
 const mockOpenAccountPositions = [
   {
     marketId: 'AMD',
-    type: 'LONG',
-    amountTokens: 10.43956,
-    amountUsd: 10.45,
-    pnlPercent: -50.26,
-    pnlUsd: -10.56,
-    avgOpenPriceUsd: 170.18,
-    liqPrice1Usd: 50,
-    liqPrice2Usd: 30,
+    type: 'LONG', // Contract view ("size" Positive - Long, Negative - Short)
+    amountTokens: 10.43956, // Contract view "size"
+    amountUsd: 10.45, // Calculate front
+    avgOpenPriceUsd: 170.18, // Spot price at the time of opening the position
+    liqPrice1Usd: 50, // Need more input (Calculate (Need formula))
+    liqPrice2Usd: 30, // Need more input (Calculate (Need formula))
+    pnlPercent: -50.26, // Calculate (Need formula)
+    pnlUsd: -10.56, // Calculate (Need formula)
   },
   {
     marketId: 'SHOP',
@@ -40,13 +37,13 @@ const mockOpenAccountPositions = [
 const mockMarketsData = [
   {
     marketId: 'AMD',
-    marketPriceUsd: 84.63,
-    marketPriceChange24Usd: 1.85,
-    indexPriceUsd: 84.8,
-    indexPriceChange24Usd: 1.86,
-    volume24Tokens: 83416.583416,
-    volume24Usd: 83500,
-    fundingRateChange8Percent: 0.0088,
+    volume24Usd: 83500, // Indexer
+    volume24Tokens: 83416.583416, // Indexer
+    fundingRateChange8Percent: 0.0088, // Indexer
+    indexPriceUsd: 84.8, // Contract View
+    marketPriceUsd: 84.63, // Contract View
+    marketPriceChange24Usd: 1.85, // *
+    indexPriceChange24Usd: 1.86, // *
   },
   {
     marketId: 'AAPL',
@@ -163,8 +160,8 @@ export class AppController {
   }
 
   @Get('/api/v1/markets')
-  getMarkets() {
-    return { markets: mockMarketsData };
+  async getMarkets() {
+    return await this.appService.getMarkets();
   }
 
   @Get('/api/v1/account')
@@ -207,5 +204,40 @@ export class AppController {
         error: 'Market not found',
       });
     }
+  }
+
+  @Get('/api/v1/trades')
+  getAllTrades() {
+    return this.appService.getAllTrades();
+  }
+
+  @Get('/api/v1/trades/:trader')
+  async getAllTradesByTrader(@Param('trader') trader: string) {
+    return await this.appService.getAllTradesByTrader(trader);
+  }
+
+  @Get('/api/v1/trade/:id')
+  async getTradeById(@Param('id') id: string) {
+    return await this.appService.getTradeById(id);
+  }
+
+  @Get('/api/v1/deposits')
+  async getAllDeposits() {
+    return await this.appService.getDeposits();
+  }
+
+  @Get('/api/v1/deposits/:sender')
+  async getDepositsBySender(@Param('sender') sender: string) {
+    return await this.appService.getDepositsBySender(sender);
+  }
+
+  @Get('/api/v1/deposit/:id')
+  async getDepositById(@Param('id') id: string) {
+    return await this.appService.getDepositById(id);
+  }
+
+  @Get('/api/v1/hello')
+  getHello() {
+    return this.appService.getHello();
   }
 }
