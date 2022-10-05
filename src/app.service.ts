@@ -11,9 +11,7 @@ import {
   GET_POSITIONS_BY_TRADER
 } from "./queries";
 import { IPositionsResponse, ITrade } from "./interfaces";
-import { SECONDS_IN_DAY, TUPLE_FIRST_INDEX, ZERO_AMOUNT } from "./constants";
-
-const CLEARING_HOUSE_ENDPOINT = "http://157.230.234.73:8000/subgraphs/name/custom-subgraph";
+import { CLEARING_HOUSE_ENDPOINT, SECONDS_IN_DAY, TUPLE_FIRST_INDEX, ZERO_AMOUNT } from "./constants";
 
 @Injectable()
 export class AppService {
