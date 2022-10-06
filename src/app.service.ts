@@ -70,7 +70,7 @@ export class AppService {
       volume24Tokens: '0',
       marketPriceUsd:
         amdInfo.data.data.positions[TUPLE_FIRST_INDEX]?.spotPrice ?? '0',
-      marketPriceChangePercentage: '0',
+      marketPriceChange24Usd: '0',
     };
 
     const shopResponse = {
@@ -78,18 +78,18 @@ export class AppService {
       volume24Tokens: '0',
       marketPriceUsd:
         shopInfo.data.data.positions[TUPLE_FIRST_INDEX]?.spotPrice ?? '0',
-      marketPriceChangePercentage: '0',
+      marketPriceChange24Usd: '0',
     };
 
     aaplResponse.marketPriceChangePercentage = this.calculate24HourPriceChange(
       aaplInfo.data,
       aaplResponse.marketPriceUsd,
     );
-    amdResponse.marketPriceChangePercentage = this.calculate24HourPriceChange(
+    amdResponse.marketPriceChange24Usd = this.calculate24HourPriceChange(
       amdInfo.data,
       amdResponse.marketPriceUsd,
     );
-    shopResponse.marketPriceChangePercentage = this.calculate24HourPriceChange(
+    shopResponse.marketPriceChange24Usd = this.calculate24HourPriceChange(
       shopInfo.data,
       shopResponse.marketPriceUsd,
     );
