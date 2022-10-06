@@ -59,7 +59,7 @@ export const GET_ALL_AMD_POSITIONS = () => `query {
 }`;
 
 export const GET_ALL_SHOP_POSITIONS = () => `query {
-  positions(where: {amm: "0xce5e9a5102fadec438a2e209b64b0e1797f9be3b"}, orderBy: date, orderDirection: desc) {
+  positions(where: {amm: "0x4e99355af8242ef15f29d599901fefbbc4564b96"}, orderBy: date, orderDirection: desc) {
     id
     trader
     amm
