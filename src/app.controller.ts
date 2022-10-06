@@ -168,7 +168,6 @@ export class AppController {
         Number(marketData.volume24Tokens) * Number(marketData.marketPriceUsd),
       fundingRateChange8Percent: 0.0088,
       indexPriceUsd: Number(marketData.marketPriceUsd) * 1.01,
-      marketPriceChange24Usd: 0.02,
       indexPriceChange24Usd: 0.01,
       ...marketData,
     }));

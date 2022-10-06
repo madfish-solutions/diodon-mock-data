@@ -27,7 +27,7 @@ import {
   TUPLE_FIRST_INDEX,
   ZERO_AMOUNT,
 } from './constants';
-import { calculate24HourPriceChange } from './utils/helpers';
+import { calculatePercentageChange } from './utils/helpers';
 
 @Injectable()
 export class AppService {
@@ -63,6 +63,7 @@ export class AppService {
       marketPriceUsd:
         aaplInfo.data.data.positions[TUPLE_FIRST_INDEX]?.spotPrice ?? '0',
       marketPriceChangePercentage: '0',
+      marketPriceChange24Usd: '0',
     };
 
     const amdResponse = {
@@ -70,6 +71,7 @@ export class AppService {
       volume24Tokens: '0',
       marketPriceUsd:
         amdInfo.data.data.positions[TUPLE_FIRST_INDEX]?.spotPrice ?? '0',
+      marketPriceChangePercentage: '0',
       marketPriceChange24Usd: '0',
     };
 
@@ -78,18 +80,35 @@ export class AppService {
       volume24Tokens: '0',
       marketPriceUsd:
         shopInfo.data.data.positions[TUPLE_FIRST_INDEX]?.spotPrice ?? '0',
+      marketPriceChangePercentage: '0',
       marketPriceChange24Usd: '0',
     };
 
-    aaplResponse.marketPriceChangePercentage = this.calculate24HourPriceChange(
+    aaplResponse.marketPriceChangePercentage =
+      this.calculate24HourMarketPricePercentageChange(
+        aaplInfo.data,
+        aaplResponse.marketPriceUsd,
+      );
+    amdResponse.marketPriceChangePercentage =
+      this.calculate24HourMarketPricePercentageChange(
+        amdInfo.data,
+        amdResponse.marketPriceUsd,
+      );
+    shopResponse.marketPriceChangePercentage =
+      this.calculate24HourMarketPricePercentageChange(
+        shopInfo.data,
+        shopResponse.marketPriceUsd,
+      );
+
+    aaplResponse.marketPriceChange24Usd = this.calculate24HourMarketPriceChange(
       aaplInfo.data,
       aaplResponse.marketPriceUsd,
     );
-    amdResponse.marketPriceChange24Usd = this.calculate24HourPriceChange(
+    amdResponse.marketPriceChange24Usd = this.calculate24HourMarketPriceChange(
       amdInfo.data,
       amdResponse.marketPriceUsd,
     );
-    shopResponse.marketPriceChange24Usd = this.calculate24HourPriceChange(
+    shopResponse.marketPriceChange24Usd = this.calculate24HourMarketPriceChange(
       shopInfo.data,
       shopResponse.marketPriceUsd,
     );
@@ -245,7 +264,7 @@ export class AppService {
     return accumulatedVolume.toFixed();
   }
 
-  private calculate24HourPriceChange(
+  private calculate24HourMarketPriceChange(
     positionsResponse: IPositionsResponse,
     currentPrice: string,
   ) {
@@ -255,7 +274,23 @@ export class AppService {
     const aaplDayAgoPosition = positionsResponse.data.positions.find(
       ({ date }) => new BigNumber(date).isLessThanOrEqualTo(dayAgoDate),
     );
-    return calculate24HourPriceChange(
+
+    return BigNumber(currentPrice)
+      .minus(aaplDayAgoPosition?.spotPrice ?? '0')
+      .toFixed(2);
+  }
+
+  private calculate24HourMarketPricePercentageChange(
+    positionsResponse: IPositionsResponse,
+    currentPrice: string,
+  ) {
+    const dayAgoDate = new BigNumber(
+      positionsResponse.data.positions[TUPLE_FIRST_INDEX].date,
+    ).minus(SECONDS_IN_DAY);
+    const aaplDayAgoPosition = positionsResponse.data.positions.find(
+      ({ date }) => new BigNumber(date).isLessThanOrEqualTo(dayAgoDate),
+    );
+    return calculatePercentageChange(
       new BigNumber(currentPrice),
       new BigNumber(aaplDayAgoPosition?.spotPrice ?? '0'),
     );
