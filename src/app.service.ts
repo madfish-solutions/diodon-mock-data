@@ -9,14 +9,25 @@ import {
   GET_ALL_SHOP_POSITIONS,
   GET_DEPOSIT_BY_ID,
   GET_DEPOSITS_BY_SENDER,
+  GET_FUNDING_RATES_AND_INDEX_PRICES,
   GET_POSITION_BY_ID,
   GET_POSITIONS_BY_TRADER,
 } from './queries';
-import { IPositionsResponse, ITrade } from './interfaces';
-import { SECONDS_IN_DAY, TUPLE_FIRST_INDEX, ZERO_AMOUNT } from './constants';
-
-const CLEARING_HOUSE_ENDPOINT =
-  'http://157.230.234.73:8000/subgraphs/name/custom-subgraph';
+import {
+  IFundingRatesResponse,
+  IPositionsResponse,
+  ITrade,
+} from './interfaces';
+import {
+  AAPL_AMM_ENDPOINT,
+  AMD_AMM_ENDPOINT,
+  CLEARING_HOUSE_ENDPOINT,
+  SECONDS_IN_DAY,
+  SHOP_AMM_ENDPOINT,
+  TUPLE_FIRST_INDEX,
+  ZERO_AMOUNT,
+} from './constants';
+import { calculate24HourPriceChange } from './utils/helpers';
 
 @Injectable()
 export class AppService {
@@ -51,6 +62,7 @@ export class AppService {
       volume24Tokens: '0',
       marketPriceUsd:
         aaplInfo.data.data.positions[TUPLE_FIRST_INDEX]?.spotPrice ?? '0',
+      marketPriceChangePercentage: '0',
     };
 
     const amdResponse = {
@@ -58,6 +70,7 @@ export class AppService {
       volume24Tokens: '0',
       marketPriceUsd:
         amdInfo.data.data.positions[TUPLE_FIRST_INDEX]?.spotPrice ?? '0',
+      marketPriceChange24Usd: '0',
     };
 
     const shopResponse = {
@@ -65,7 +78,21 @@ export class AppService {
       volume24Tokens: '0',
       marketPriceUsd:
         shopInfo.data.data.positions[TUPLE_FIRST_INDEX]?.spotPrice ?? '0',
+      marketPriceChange24Usd: '0',
     };
+
+    aaplResponse.marketPriceChangePercentage = this.calculate24HourPriceChange(
+      aaplInfo.data,
+      aaplResponse.marketPriceUsd,
+    );
+    amdResponse.marketPriceChange24Usd = this.calculate24HourPriceChange(
+      amdInfo.data,
+      amdResponse.marketPriceUsd,
+    );
+    shopResponse.marketPriceChange24Usd = this.calculate24HourPriceChange(
+      shopInfo.data,
+      shopResponse.marketPriceUsd,
+    );
 
     aaplResponse.volume24Tokens = this.calculateVolume(
       aaplInfo.data.data.positions,
@@ -161,6 +188,48 @@ export class AppService {
     }
   }
 
+  async getAmdFundingRatesAndIndexPrices() {
+    try {
+      const a = await this.httpService.axiosRef.post<IFundingRatesResponse>(
+        AMD_AMM_ENDPOINT,
+        { query: GET_FUNDING_RATES_AND_INDEX_PRICES() },
+      );
+
+      return a.data.data.fundingRates;
+    } catch (error) {
+      console.error(error);
+      return error.message;
+    }
+  }
+
+  async getAaplFundingRatesAndIndexPrices() {
+    try {
+      const a = await this.httpService.axiosRef.post<IFundingRatesResponse>(
+        AAPL_AMM_ENDPOINT,
+        { query: GET_FUNDING_RATES_AND_INDEX_PRICES() },
+      );
+
+      return a.data.data.fundingRates;
+    } catch (error) {
+      console.error(error);
+      return error.message;
+    }
+  }
+
+  async getShopFundingRatesAndIndexPrices() {
+    try {
+      const a = await this.httpService.axiosRef.post<IFundingRatesResponse>(
+        SHOP_AMM_ENDPOINT,
+        { query: GET_FUNDING_RATES_AND_INDEX_PRICES() },
+      );
+
+      return a.data.data.fundingRates;
+    } catch (error) {
+      console.error(error);
+      return error.message;
+    }
+  }
+
   private calculateVolume(tradeInfo: Array<ITrade>) {
     const timestampForDayAgo = Math.floor(Date.now() / 1000) - SECONDS_IN_DAY;
     let accumulatedVolume = new BigNumber(ZERO_AMOUNT);
@@ -174,5 +243,21 @@ export class AppService {
     }
 
     return accumulatedVolume.toFixed();
+  }
+
+  private calculate24HourPriceChange(
+    positionsResponse: IPositionsResponse,
+    currentPrice: string,
+  ) {
+    const dayAgoDate = new BigNumber(
+      positionsResponse.data.positions[TUPLE_FIRST_INDEX].date,
+    ).minus(SECONDS_IN_DAY);
+    const aaplDayAgoPosition = positionsResponse.data.positions.find(
+      ({ date }) => new BigNumber(date).isLessThanOrEqualTo(dayAgoDate),
+    );
+    return calculate24HourPriceChange(
+      new BigNumber(currentPrice),
+      new BigNumber(aaplDayAgoPosition?.spotPrice ?? '0'),
+    );
   }
 }
