@@ -1,7 +1,7 @@
 import { BigNumber } from 'bignumber.js';
 import { ZERO_AMOUNT } from '../constants';
 
-export const calculate24HourPriceChange = (
+export const calculatePercentageChange = (
   oldPrice: BigNumber,
   newPrice: BigNumber,
 ) => {
