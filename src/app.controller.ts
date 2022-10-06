@@ -250,4 +250,19 @@ export class AppController {
   getHello() {
     return this.appService.getHello();
   }
+
+  @Get('/api/v1/amd/rates')
+  async getAmdFundingRatesAndIndexPrices() {
+    return await this.appService.getAmdFundingRatesAndIndexPrices();
+  }
+
+  @Get('/api/v1/aapl/rates')
+  async getAaplFundingRatesAndIndexPrices() {
+    return await this.appService.getAaplFundingRatesAndIndexPrices();
+  }
+
+  @Get('/api/v1/shop/rates')
+  async getShopFundingRatesAndIndexPrices() {
+    return await this.appService.getShopFundingRatesAndIndexPrices();
+  }
 }

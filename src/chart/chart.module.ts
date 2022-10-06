@@ -1,11 +1,11 @@
-import { Module } from "@nestjs/common";
-import { HttpModule } from "@nestjs/axios";
+import { Module } from '@nestjs/common';
+import { HttpModule } from '@nestjs/axios';
 
-import { ChartService } from "./chart.service";
-import { ChartController } from "./chart.controller";
+import { ChartService } from './chart.service';
+import { ChartController } from './chart.controller';
 
 @Module({
-  imports:[HttpModule],
+  imports: [HttpModule],
   providers: [ChartService],
   controllers: [ChartController],
 })

@@ -24,4 +24,18 @@ export interface IPositionsResponse {
   data: IPositions;
 }
 
+export interface IFundingRate {
+  id: string;
+  rate: string;
+  underlyingPrice: string;
+  date: string;
+}
+
+export interface IFundingRates {
+  fundingRates: Array<IFundingRate>;
+}
+
+export interface IFundingRatesResponse {
+  data: IFundingRates;
+}
 

@@ -1,6 +1,6 @@
-import { Controller, Get } from "@nestjs/common";
+import { Controller, Get } from '@nestjs/common';
 
-import { ChartService, IChartData } from "./chart.service";
+import { ChartService, IChartData } from './chart.service';
 
 @Controller()
 export class ChartController {
@@ -8,6 +8,16 @@ export class ChartController {
 
   @Get('api/v1/amd/market-prices')
   getAmdMarketPrices(): Array<IChartData> {
+    return this.chartService.amdChartData;
+  }
+
+  @Get('api/v1/aapl/market-prices')
+  getAaplMarketPrices(): Array<IChartData> {
     return this.chartService.aaplChartData;
+  }
+
+  @Get('api/v1/shop/market-prices')
+  getShopMarketPrices(): Array<IChartData> {
+    return this.chartService.shopChartData;
   }
 }
