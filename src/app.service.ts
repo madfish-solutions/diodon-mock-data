@@ -306,7 +306,7 @@ export class AppService {
       ({ date }) => new BigNumber(date).isLessThanOrEqualTo(dayAgoDate),
     );
     return calculatePercentageChange(
-      new BigNumber(aaplDayAgoPosition?.spotPrice ?? '0'),
+      toReal(new BigNumber(aaplDayAgoPosition?.spotPrice ?? '0')),
       new BigNumber(currentPrice),
     );
   }
