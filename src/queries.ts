@@ -21,7 +21,7 @@ export const GET_ALL_POSITIONS = () => `query {
 export const GET_ALL_AAPL_POSITIONS = (
   orderDirection: 'asc' | 'desc' = 'desc',
 ) => `query {
-  positions(where: {amm: "0x00c0086a3c2bf842a0a446d8b7d6c395dd63647b"}, orderBy: date, orderDirection: ${orderDirection}) {
+  positions(where: {amm: "0x080486eedaf43c5bd8495fa5aeaca21ed23a58bf"}, orderBy: date, orderDirection: ${orderDirection}) {
     id
     trader
     amm
@@ -43,7 +43,7 @@ export const GET_ALL_AAPL_POSITIONS = (
 export const GET_ALL_AMD_POSITIONS = (
   orderDirection: 'asc' | 'desc' = 'desc',
 ) => `query {
-  positions(where: {amm: "0x38d58dd8d0890dac771a9eef7eed9e773e0dab1e"}, orderBy: date, orderDirection: ${orderDirection}) {
+  positions(where: {amm: "0x7d1ecca059f4c06669c66e4e5708f07fcb5d555d"}, orderBy: date, orderDirection: ${orderDirection}) {
     id
     trader
     amm
@@ -65,7 +65,7 @@ export const GET_ALL_AMD_POSITIONS = (
 export const GET_ALL_SHOP_POSITIONS = (
   orderDirection: 'asc' | 'desc' = 'desc',
 ) => `query {
-  positions(where: {amm: "0xce5e9a5102fadec438a2e209b64b0e1797f9be3b"}, orderBy: date, orderDirection: ${orderDirection}) {
+  positions(where: {amm: "0x1b3e5d5bc9223e39581062f929dab6d1dc12c7ea"}, orderBy: date, orderDirection: ${orderDirection}) {
     id
     trader
     amm
