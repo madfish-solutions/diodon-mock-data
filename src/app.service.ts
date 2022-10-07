@@ -27,11 +27,7 @@ import {
   TUPLE_FIRST_INDEX,
   ZERO_AMOUNT,
 } from './constants';
-import { calculatePercentageChange } from './utils/helpers';
-
-const toReal = (value: BigNumber.Value, decimals = 18) => {
-  return new BigNumber(value).div(new BigNumber(10).pow(decimals));
-};
+import { calculatePercentageChange, toReal } from './utils/helpers';
 
 @Injectable()
 export class AppService {
