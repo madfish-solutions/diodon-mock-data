@@ -29,6 +29,10 @@ import {
 } from './constants';
 import { calculatePercentageChange } from './utils/helpers';
 
+const toReal = (value: BigNumber.Value, decimals = 18) => {
+  return new BigNumber(value).div(new BigNumber(10).pow(decimals));
+};
+
 @Injectable()
 export class AppService {
   constructor(private httpService: HttpService) {}
@@ -60,8 +64,9 @@ export class AppService {
     const aaplResponse = {
       marketId: 'AAPL',
       volume24Tokens: '0',
-      marketPriceUsd:
+      marketPriceUsd: toReal(
         aaplInfo.data.data.positions[TUPLE_FIRST_INDEX]?.spotPrice ?? '0',
+      ).toFixed(),
       marketPriceChangePercentage: '0',
       marketPriceChange24Usd: '0',
     };
@@ -69,8 +74,9 @@ export class AppService {
     const amdResponse = {
       marketId: 'AMD',
       volume24Tokens: '0',
-      marketPriceUsd:
+      marketPriceUsd: toReal(
         amdInfo.data.data.positions[TUPLE_FIRST_INDEX]?.spotPrice ?? '0',
+      ).toFixed(),
       marketPriceChangePercentage: '0',
       marketPriceChange24Usd: '0',
     };
@@ -78,8 +84,9 @@ export class AppService {
     const shopResponse = {
       marketId: 'SHOP',
       volume24Tokens: '0',
-      marketPriceUsd:
+      marketPriceUsd: toReal(
         shopInfo.data.data.positions[TUPLE_FIRST_INDEX]?.spotPrice ?? '0',
+      ).toFixed(),
       marketPriceChangePercentage: '0',
       marketPriceChange24Usd: '0',
     };
@@ -261,7 +268,7 @@ export class AppService {
       }
     }
 
-    return accumulatedVolume.toFixed();
+    return toReal(accumulatedVolume).toFixed();
   }
 
   private calculate24HourMarketPriceChange(
