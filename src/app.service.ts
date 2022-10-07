@@ -268,6 +268,10 @@ export class AppService {
     positionsResponse: IPositionsResponse,
     currentPrice: string,
   ) {
+    if (positionsResponse.data.positions.length === 0) {
+      return '0';
+    }
+
     const dayAgoDate = new BigNumber(
       positionsResponse.data.positions[TUPLE_FIRST_INDEX].date,
     ).minus(SECONDS_IN_DAY);
@@ -284,6 +288,10 @@ export class AppService {
     positionsResponse: IPositionsResponse,
     currentPrice: string,
   ) {
+    if (positionsResponse.data.positions.length === 0) {
+      return '0';
+    }
+
     const dayAgoDate = new BigNumber(
       positionsResponse.data.positions[TUPLE_FIRST_INDEX].date,
     ).minus(SECONDS_IN_DAY);
@@ -291,8 +299,8 @@ export class AppService {
       ({ date }) => new BigNumber(date).isLessThanOrEqualTo(dayAgoDate),
     );
     return calculatePercentageChange(
-      new BigNumber(currentPrice),
       new BigNumber(aaplDayAgoPosition?.spotPrice ?? '0'),
+      new BigNumber(currentPrice),
     );
   }
 }
