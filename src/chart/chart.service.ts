@@ -15,6 +15,7 @@ import {
   TUPLE_FIRST_INDEX,
 } from '../constants';
 import { Interval } from '@nestjs/schedule';
+import { getLastElement, isExist } from '../utils/helpers';
 
 export interface IChartData {
   time: number;
@@ -23,6 +24,9 @@ export interface IChartData {
 
 @Injectable()
 export class ChartService implements OnModuleInit {
+  private aaplLastTimestamp = '1';
+  private amdLastTimestamp = '1';
+  private shopLastTimestamp = '1';
   private _amdChartData: Array<IChartData> = [];
   private _aaplChartData: Array<IChartData> = [];
   private _shopChartData: Array<IChartData> = [];
@@ -50,27 +54,21 @@ export class ChartService implements OnModuleInit {
   }
 
   private getAaplPositions() {
-    const lastElement = this._aaplChartData[this._aaplChartData.length - 1];
-    const timestamp = lastElement?.time.toString() ?? '1';
     return this.httpService.axiosRef.post<IPositionsResponse>(
       CLEARING_HOUSE_ENDPOINT,
-      { query: GET_ALL_AAPL_POSITIONS('asc', timestamp) },
+      { query: GET_ALL_AAPL_POSITIONS('asc', this.aaplLastTimestamp) },
     );
   }
   private getAmdPositions() {
-    const lastElement = this._amdChartData[this._amdChartData.length - 1];
-    const timestamp = lastElement?.time.toString() ?? '1';
     return this.httpService.axiosRef.post<IPositionsResponse>(
       CLEARING_HOUSE_ENDPOINT,
-      { query: GET_ALL_AMD_POSITIONS('asc', timestamp) },
+      { query: GET_ALL_AMD_POSITIONS('asc', this.amdLastTimestamp) },
     );
   }
   private getShopPositions() {
-    const lastElement = this._shopChartData[this._shopChartData.length - 1];
-    const timestamp = lastElement?.time.toString() ?? '1';
     return this.httpService.axiosRef.post<IPositionsResponse>(
       CLEARING_HOUSE_ENDPOINT,
-      { query: GET_ALL_SHOP_POSITIONS('asc', timestamp) },
+      { query: GET_ALL_SHOP_POSITIONS('asc', this.shopLastTimestamp) },
     );
   }
 
@@ -78,24 +76,46 @@ export class ChartService implements OnModuleInit {
   private async aggregateApplChartData() {
     const aaplPositions = await this.getAaplPositions();
     this.aggregateMarketChartData(aaplPositions.data, this._aaplChartData);
+
+    const lastElement = getLastElement(aaplPositions.data.data.positions);
+
+    if (isExist(lastElement)) {
+      this.aaplLastTimestamp = lastElement.date;
+    }
   }
 
   @Interval(FIFTEEN_MINUTES_IN_MILLISECONDS)
   private async aggregateAmdChartData() {
     const amdPositions = await this.getAmdPositions();
     this.aggregateMarketChartData(amdPositions.data, this._amdChartData);
+
+    const lastElement = getLastElement(amdPositions.data.data.positions);
+
+    if (isExist(lastElement)) {
+      this.amdLastTimestamp = lastElement.date;
+    }
   }
 
   @Interval(FIFTEEN_MINUTES_IN_MILLISECONDS)
   private async aggregateShopChartData() {
     const shopPositions = await this.getShopPositions();
     this.aggregateMarketChartData(shopPositions.data, this._shopChartData);
+
+    const lastElement = getLastElement(shopPositions.data.data.positions);
+
+    if (isExist(lastElement)) {
+      this.amdLastTimestamp = lastElement.date;
+    }
   }
 
   private aggregateMarketChartData(
     positions: IPositionsResponse,
     chartData: Array<IChartData>,
   ) {
+    if (positions.data.positions.length === 0) {
+      return;
+    }
+
     const modulo = new BigNumber(
       positions.data.positions[TUPLE_FIRST_INDEX].date,
     ).modulo(FIFTEEN_MINUTES_IN_SECONDS);
@@ -108,8 +128,10 @@ export class ChartService implements OnModuleInit {
     let sum = new BigNumber(0);
 
     for (const position of positions.data.positions) {
-      if (new BigNumber(position.date).isLessThan(nextDate)) {
-        sum = sum.plus(new BigNumber(position.positionNotional));
+      if (nextDate.isGreaterThan(position.date)) {
+        sum = sum.plus(
+          new BigNumber(position.positionNotional).dividedBy(1e18),
+        );
       } else {
         chartData.push({
           time: date.toNumber(),
@@ -120,10 +142,8 @@ export class ChartService implements OnModuleInit {
         );
         date = new BigNumber(position.date).minus(modulo);
         nextDate = date.plus(FIFTEEN_MINUTES_IN_SECONDS);
-        sum = new BigNumber(0);
+        sum = new BigNumber(position.positionNotional).dividedBy(1e18);
       }
     }
   }
-
-  private async getFundingRateAndIndexPrice() {}
 }
