@@ -2,7 +2,7 @@ import { HttpService } from '@nestjs/axios';
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { BigNumber } from 'bignumber.js';
 
-import { IPositionsResponse } from '../interfaces';
+import { IMarketChartData, IPositionsResponse } from '../interfaces';
 import {
   GET_ALL_AAPL_POSITIONS,
   GET_ALL_AMD_POSITIONS,
@@ -11,25 +11,27 @@ import {
 import {
   CLEARING_HOUSE_ENDPOINT,
   FIFTEEN_MINUTES_IN_MILLISECONDS,
-  FIFTEEN_MINUTES_IN_SECONDS,
-  TUPLE_FIRST_INDEX,
 } from '../constants';
 import { Interval } from '@nestjs/schedule';
 import { getLastElement, isExist } from '../utils/helpers';
-
-export interface IChartData {
-  time: number;
-  value: number;
-}
 
 @Injectable()
 export class ChartService implements OnModuleInit {
   private aaplLastTimestamp = '1';
   private amdLastTimestamp = '1';
   private shopLastTimestamp = '1';
-  private _amdChartData: Array<IChartData> = [];
-  private _aaplChartData: Array<IChartData> = [];
-  private _shopChartData: Array<IChartData> = [];
+  private _amdChartData: IMarketChartData = {
+    volumeData: [],
+    spotPriceData: [],
+  };
+  private _aaplChartData: IMarketChartData = {
+    volumeData: [],
+    spotPriceData: [],
+  };
+  private _shopChartData: IMarketChartData = {
+    volumeData: [],
+    spotPriceData: [],
+  };
 
   constructor(private httpService: HttpService) {}
 
@@ -75,7 +77,7 @@ export class ChartService implements OnModuleInit {
   @Interval(FIFTEEN_MINUTES_IN_MILLISECONDS)
   private async aggregateApplChartData() {
     const aaplPositions = await this.getAaplPositions();
-    this.aggregateMarketChartData(aaplPositions.data, this._aaplChartData);
+    this.aggregateChartData(aaplPositions.data, this._aaplChartData);
 
     const lastElement = getLastElement(aaplPositions.data.data.positions);
 
@@ -87,7 +89,7 @@ export class ChartService implements OnModuleInit {
   @Interval(FIFTEEN_MINUTES_IN_MILLISECONDS)
   private async aggregateAmdChartData() {
     const amdPositions = await this.getAmdPositions();
-    this.aggregateMarketChartData(amdPositions.data, this._amdChartData);
+    this.aggregateChartData(amdPositions.data, this._amdChartData);
 
     const lastElement = getLastElement(amdPositions.data.data.positions);
 
@@ -99,7 +101,7 @@ export class ChartService implements OnModuleInit {
   @Interval(FIFTEEN_MINUTES_IN_MILLISECONDS)
   private async aggregateShopChartData() {
     const shopPositions = await this.getShopPositions();
-    this.aggregateMarketChartData(shopPositions.data, this._shopChartData);
+    this.aggregateChartData(shopPositions.data, this._shopChartData);
 
     const lastElement = getLastElement(shopPositions.data.data.positions);
 
@@ -108,42 +110,25 @@ export class ChartService implements OnModuleInit {
     }
   }
 
-  private aggregateMarketChartData(
+  private async aggregateChartData(
     positions: IPositionsResponse,
-    chartData: Array<IChartData>,
+    chartData: IMarketChartData,
   ) {
     if (positions.data.positions.length === 0) {
       return;
     }
 
-    const modulo = new BigNumber(
-      positions.data.positions[TUPLE_FIRST_INDEX].date,
-    ).modulo(FIFTEEN_MINUTES_IN_SECONDS);
-
-    let date = new BigNumber(
-      positions.data.positions[TUPLE_FIRST_INDEX].date,
-    ).minus(modulo);
-
-    let nextDate = date.plus(FIFTEEN_MINUTES_IN_SECONDS);
-    let sum = new BigNumber(0);
-
     for (const position of positions.data.positions) {
-      if (nextDate.isGreaterThan(position.date)) {
-        sum = sum.plus(
-          new BigNumber(position.positionNotional).dividedBy(1e18),
-        );
-      } else {
-        chartData.push({
-          time: date.toNumber(),
-          value: Number(sum.toFixed()),
-        });
-        const modulo = new BigNumber(position.date).modulo(
-          FIFTEEN_MINUTES_IN_SECONDS,
-        );
-        date = new BigNumber(position.date).minus(modulo);
-        nextDate = date.plus(FIFTEEN_MINUTES_IN_SECONDS);
-        sum = new BigNumber(position.positionNotional).dividedBy(1e18);
-      }
+      chartData.spotPriceData.push({
+        time: Number(position.date),
+        value: new BigNumber(position.spotPrice).dividedBy(1e18).toNumber(),
+      });
+      chartData.volumeData.push({
+        time: Number(position.date),
+        value: new BigNumber(position.positionNotional)
+          .dividedBy(1e18)
+          .toNumber(),
+      });
     }
   }
 }

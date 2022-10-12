@@ -170,7 +170,7 @@ export const GET_DEPOSIT_BY_ID = (id: string) => `query {
 }`;
 
 export const GET_FUNDING_RATES_AND_INDEX_PRICES = () => `query {
-  fundingRates(orderDirection:asc, orderBy: date) {
+  fundingRates(orderDirection:desc, orderBy: date) {
     id
     rate
     date

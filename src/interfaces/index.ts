@@ -27,8 +27,8 @@ export interface IPositionsResponse {
 export interface IFundingRate {
   id: string;
   rate: string;
-  underlyingPrice: string;
   date: string;
+  underlyingPrice: string;
 }
 
 export interface IFundingRates {
@@ -39,3 +39,12 @@ export interface IFundingRatesResponse {
   data: IFundingRates;
 }
 
+export interface IChartData {
+  time: number;
+  value: number;
+}
+
+export interface IMarketChartData {
+  volumeData: Array<IChartData>;
+  spotPriceData: Array<IChartData>;
+}
