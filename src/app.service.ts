@@ -14,6 +14,7 @@ import {
   GET_POSITIONS_BY_TRADER,
 } from './queries';
 import {
+  IFundingRate,
   IFundingRatesResponse,
   IPositionsResponse,
   ITrade,
@@ -23,6 +24,7 @@ import {
   AMD_AMM_ENDPOINT,
   CLEARING_HOUSE_ENDPOINT,
   SECONDS_IN_DAY,
+  SECONDS_IN_HOUR,
   SHOP_AMM_ENDPOINT,
   TUPLE_FIRST_INDEX,
   ZERO_AMOUNT,
@@ -51,10 +53,20 @@ export class AppService {
       { query: GET_ALL_SHOP_POSITIONS() },
     );
 
-    const [aaplInfo, amdInfo, shopInfo] = await Promise.all([
+    const [
+      aaplInfo,
+      amdInfo,
+      shopInfo,
+      aaplFundingRates,
+      amdFundingRates,
+      shopFundingRates,
+    ] = await Promise.all([
       applPromise,
       amdPromise,
       shopPromise,
+      this.getAaplFundingRatesAndIndexPrices(),
+      this.getAmdFundingRatesAndIndexPrices(),
+      this.getShopFundingRatesAndIndexPrices(),
     ]);
 
     const aaplResponse = {
@@ -65,6 +77,11 @@ export class AppService {
       ).toFixed(),
       marketPriceChangePercentage: '0',
       marketPriceChange24Usd: '0',
+      indexPriceUsd:
+        aaplFundingRates[aaplFundingRates.length - 1]?.underlyingPrice ?? '0',
+      indexPriceChange24Usd: '0',
+      fundingRate: aaplFundingRates[aaplFundingRates.length - 1]?.rate ?? '0',
+      fundingRateChangePercentage: '0',
     };
 
     const amdResponse = {
@@ -75,6 +92,11 @@ export class AppService {
       ).toFixed(),
       marketPriceChangePercentage: '0',
       marketPriceChange24Usd: '0',
+      indexPriceUsd:
+        amdFundingRates[amdFundingRates.length - 1]?.underlyingPrice ?? '0',
+      indexPriceChange24Usd: '0',
+      fundingRate: amdFundingRates[amdFundingRates.length - 1]?.rate ?? '0',
+      fundingRateChangePercentage: '0',
     };
 
     const shopResponse = {
@@ -85,7 +107,28 @@ export class AppService {
       ).toFixed(),
       marketPriceChangePercentage: '0',
       marketPriceChange24Usd: '0',
+      indexPriceUsd:
+        shopFundingRates[shopFundingRates.length - 1]?.underlyingPrice ?? '0',
+      indexPriceChange24Usd: '0',
+      fundingRate: shopFundingRates[shopFundingRates.length - 1]?.rate ?? '0',
+      fundingRateChangePercentage: '0',
     };
+
+    aaplResponse.indexPriceChange24Usd =
+      this.calculate24HourIndexPricePercentageChange(
+        aaplFundingRates,
+        aaplResponse.indexPriceUsd,
+      );
+    amdResponse.indexPriceChange24Usd =
+      this.calculate24HourIndexPricePercentageChange(
+        amdFundingRates,
+        amdResponse.indexPriceUsd,
+      );
+    shopResponse.indexPriceChange24Usd =
+      this.calculate24HourIndexPricePercentageChange(
+        shopFundingRates,
+        shopResponse.indexPriceUsd,
+      );
 
     aaplResponse.marketPriceChangePercentage =
       this.calculate24HourMarketPricePercentageChange(
@@ -125,6 +168,22 @@ export class AppService {
     shopResponse.volume24Tokens = this.calculateVolume(
       shopInfo.data.data.positions,
     );
+
+    aaplResponse.fundingRateChangePercentage =
+      this.calculateHourlyFundingRateChangePercantage(
+        aaplFundingRates,
+        aaplResponse.fundingRate,
+      );
+    amdResponse.fundingRateChangePercentage =
+      this.calculateHourlyFundingRateChangePercantage(
+        amdFundingRates,
+        amdResponse.fundingRate,
+      );
+    shopResponse.fundingRateChangePercentage =
+      this.calculateHourlyFundingRateChangePercantage(
+        shopFundingRates,
+        shopResponse.fundingRate,
+      );
 
     return [aaplResponse, amdResponse, shopResponse];
   }
@@ -210,7 +269,7 @@ export class AppService {
     }
   }
 
-  async getAmdFundingRatesAndIndexPrices() {
+  async getAmdFundingRatesAndIndexPrices(): Promise<Array<IFundingRate>> {
     try {
       const a = await this.httpService.axiosRef.post<IFundingRatesResponse>(
         AMD_AMM_ENDPOINT,
@@ -224,7 +283,7 @@ export class AppService {
     }
   }
 
-  async getAaplFundingRatesAndIndexPrices() {
+  async getAaplFundingRatesAndIndexPrices(): Promise<Array<IFundingRate>> {
     try {
       const a = await this.httpService.axiosRef.post<IFundingRatesResponse>(
         AAPL_AMM_ENDPOINT,
@@ -238,7 +297,7 @@ export class AppService {
     }
   }
 
-  async getShopFundingRatesAndIndexPrices() {
+  async getShopFundingRatesAndIndexPrices(): Promise<Array<IFundingRate>> {
     try {
       const a = await this.httpService.axiosRef.post<IFundingRatesResponse>(
         SHOP_AMM_ENDPOINT,
@@ -267,6 +326,27 @@ export class AppService {
     return toReal(accumulatedVolume).toFixed();
   }
 
+  private calculateHourlyFundingRateChangePercantage(
+    fundingRates: Array<IFundingRate>,
+    currentFudingRate: string,
+  ) {
+    if (fundingRates.length === 0) {
+      return '0';
+    }
+
+    const hourAgoDate = new BigNumber(
+      fundingRates[TUPLE_FIRST_INDEX].date,
+    ).minus(SECONDS_IN_HOUR);
+    const hourAgoPosition = fundingRates.find(({ date }) =>
+      new BigNumber(date).isLessThanOrEqualTo(hourAgoDate),
+    );
+
+    return calculatePercentageChange(
+      new BigNumber(hourAgoPosition?.rate ?? '0'),
+      new BigNumber(currentFudingRate),
+    );
+  }
+
   private calculate24HourMarketPriceChange(
     positionsResponse: IPositionsResponse,
     currentPrice: string,
@@ -278,12 +358,12 @@ export class AppService {
     const dayAgoDate = new BigNumber(
       positionsResponse.data.positions[TUPLE_FIRST_INDEX].date,
     ).minus(SECONDS_IN_DAY);
-    const aaplDayAgoPosition = positionsResponse.data.positions.find(
-      ({ date }) => new BigNumber(date).isLessThanOrEqualTo(dayAgoDate),
+    const dayAgoPosition = positionsResponse.data.positions.find(({ date }) =>
+      new BigNumber(date).isLessThanOrEqualTo(dayAgoDate),
     );
 
     return BigNumber(currentPrice)
-      .minus(aaplDayAgoPosition?.spotPrice ?? '0')
+      .minus(dayAgoPosition?.spotPrice ?? '0')
       .toFixed(2);
   }
 
@@ -298,11 +378,31 @@ export class AppService {
     const dayAgoDate = new BigNumber(
       positionsResponse.data.positions[TUPLE_FIRST_INDEX].date,
     ).minus(SECONDS_IN_DAY);
-    const aaplDayAgoPosition = positionsResponse.data.positions.find(
-      ({ date }) => new BigNumber(date).isLessThanOrEqualTo(dayAgoDate),
+    const dayAgoPosition = positionsResponse.data.positions.find(({ date }) =>
+      new BigNumber(date).isLessThanOrEqualTo(dayAgoDate),
     );
     return calculatePercentageChange(
-      toReal(new BigNumber(aaplDayAgoPosition?.spotPrice ?? '0')),
+      toReal(new BigNumber(dayAgoPosition?.spotPrice ?? '0')),
+      new BigNumber(currentPrice),
+    );
+  }
+
+  private calculate24HourIndexPricePercentageChange(
+    fundingRates: Array<IFundingRate>,
+    currentPrice: string,
+  ) {
+    if (fundingRates.length === 0) {
+      return '0';
+    }
+
+    const dayAgoDate = new BigNumber(
+      fundingRates[TUPLE_FIRST_INDEX].date,
+    ).minus(SECONDS_IN_DAY);
+    const dayAgoPosition = fundingRates.find(({ date }) =>
+      new BigNumber(date).isLessThanOrEqualTo(dayAgoDate),
+    );
+    return calculatePercentageChange(
+      toReal(new BigNumber(dayAgoPosition?.underlyingPrice ?? '0')),
       new BigNumber(currentPrice),
     );
   }

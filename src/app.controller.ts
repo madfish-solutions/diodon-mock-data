@@ -166,9 +166,6 @@ export class AppController {
     return partialMarkets.map((marketData) => ({
       volume24Usd:
         Number(marketData.volume24Tokens) * Number(marketData.marketPriceUsd),
-      fundingRateChange8Percent: 0.0088,
-      indexPriceUsd: Number(marketData.marketPriceUsd) * 1.01,
-      indexPriceChange24Usd: 0.01,
       ...marketData,
     }));
   }
