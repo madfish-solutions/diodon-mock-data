@@ -164,8 +164,7 @@ export class AppController {
     const partialMarkets = await this.appService.getMarkets();
 
     return partialMarkets.map((marketData) => ({
-      volume24Usd:
-        Number(marketData.volume24Tokens) * Number(marketData.marketPriceUsd),
+      volume24Usd: Number(marketData.volume24Tokens),
       ...marketData,
     }));
   }
