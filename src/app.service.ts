@@ -403,8 +403,9 @@ export class AppService {
       positionsResponse.data.positions[TUPLE_FIRST_INDEX].date,
     ).minus(SECONDS_IN_DAY);
     const dayAgoPosition = positionsResponse.data.positions.find(({ date }) =>
-      new BigNumber(date).isLessThanOrEqualTo(dayAgoDate),
+      dayAgoDate.isGreaterThanOrEqualTo(date),
     );
+
     return calculatePercentageChange(
       toReal(new BigNumber(dayAgoPosition?.spotPrice ?? '1')),
       new BigNumber(currentPrice),
