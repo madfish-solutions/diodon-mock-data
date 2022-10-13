@@ -25,6 +25,7 @@ export const GET_ALL_AAPL_POSITIONS = (
   positions(
     where: {amm: "0x080486eedaf43c5bd8495fa5aeaca21ed23a58bf", date_gt: "${timestamp}"},
     orderBy: date,
+    first: 1000,
     orderDirection: ${orderDirection}
   ) {
     id
@@ -52,6 +53,7 @@ export const GET_ALL_AMD_POSITIONS = (
   positions(
     where: {amm: "0x7d1ecca059f4c06669c66e4e5708f07fcb5d555d", date_gt: "${timestamp}"},
     orderBy: date,
+    first: 1000,
     orderDirection: ${orderDirection}
   ) {
     id
@@ -79,6 +81,7 @@ export const GET_ALL_SHOP_POSITIONS = (
   positions(
     where: {amm: "0x1b3e5d5bc9223e39581062f929dab6d1dc12c7ea", date_gt: "${timestamp}"},
     orderBy: date,
+    first: 1000,
     orderDirection: ${orderDirection}
   ) {
     id
