@@ -348,10 +348,11 @@ export class AppService {
     currentMarketPrice: BigNumber,
     currentIndexPrice: BigNumber,
   ) {
-    const premium = currentMarketPrice.minus(currentIndexPrice);
+    const currentMarketPriceAtomic = currentMarketPrice.multipliedBy(1e18);
+    const premium = currentMarketPriceAtomic.minus(currentIndexPrice);
     const premiumFraction = premium.multipliedBy(3600).dividedBy(86400);
 
-    return premiumFraction.dividedBy(currentIndexPrice).toFixed(2);
+    return premiumFraction.dividedBy(currentIndexPrice).toFixed();
   }
 
   private calculateHourlyIndexPriceChangePercantage(
