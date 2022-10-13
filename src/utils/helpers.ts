@@ -1,14 +1,11 @@
 import { BigNumber } from 'bignumber.js';
-import { ZERO_AMOUNT } from '../constants';
 
 export const calculatePercentageChange = (
   oldPrice: BigNumber,
   newPrice: BigNumber,
 ) => {
-  if (oldPrice.isEqualTo(ZERO_AMOUNT)) {
-    return Number.MAX_SAFE_INTEGER.toFixed();
-  }
-  return newPrice.multipliedBy(100).dividedBy(oldPrice).minus(100).toFixed(2);
+  const difference = newPrice.minus(oldPrice);
+  return difference.dividedBy(oldPrice).multipliedBy(100).toFixed(2);
 };
 
 export const toReal = (value: BigNumber.Value, decimals = 18) => {

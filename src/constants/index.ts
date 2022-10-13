@@ -1,5 +1,6 @@
 export const ZERO_AMOUNT = 0;
 export const TUPLE_FIRST_INDEX = 0;
+export const TUPLE_SECOND_INDEX = 1;
 export const SECONDS_IN_DAY = 86400;
 export const SECONDS_IN_HOUR = 3600;
 export const FIFTEEN_MINUTES_IN_MILLISECONDS = 900000;
