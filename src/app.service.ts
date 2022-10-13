@@ -173,18 +173,18 @@ export class AppService {
 
     aaplResponse.fundingRateChangePercentage =
       this.calculateHourlyFundingRateChangePercantage(
-        aaplFundingRates,
-        aaplResponse.fundingRate,
+        new BigNumber(aaplResponse.marketPriceUsd),
+        new BigNumber(aaplResponse.indexPriceUsd),
       );
     amdResponse.fundingRateChangePercentage =
       this.calculateHourlyFundingRateChangePercantage(
-        amdFundingRates,
-        amdResponse.fundingRate,
+        new BigNumber(amdResponse.marketPriceUsd),
+        new BigNumber(amdResponse.indexPriceUsd),
       );
     shopResponse.fundingRateChangePercentage =
       this.calculateHourlyFundingRateChangePercantage(
-        shopFundingRates,
-        shopResponse.fundingRate,
+        new BigNumber(shopResponse.marketPriceUsd),
+        new BigNumber(shopResponse.indexPriceUsd),
       );
 
     aaplResponse.indexPriceChangePercentage =
@@ -345,19 +345,13 @@ export class AppService {
   }
 
   private calculateHourlyFundingRateChangePercantage(
-    fundingRates: Array<IFundingRate>,
-    currentFudingRate: string,
+    currentMarketPrice: BigNumber,
+    currentIndexPrice: BigNumber,
   ) {
-    if (fundingRates.length < 2) {
-      return '0';
-    }
+    const premium = currentMarketPrice.minus(currentIndexPrice);
+    const premiumFraction = premium.multipliedBy(3600).dividedBy(86400);
 
-    const hourAgoPosition = fundingRates[TUPLE_SECOND_INDEX];
-
-    return calculatePercentageChange(
-      new BigNumber(hourAgoPosition?.rate ?? '0'),
-      new BigNumber(currentFudingRate),
-    );
+    return premiumFraction.dividedBy(currentIndexPrice).toFixed(2);
   }
 
   private calculateHourlyIndexPriceChangePercantage(
