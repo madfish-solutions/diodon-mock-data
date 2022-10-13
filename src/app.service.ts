@@ -24,9 +24,9 @@ import {
   AMD_AMM_ENDPOINT,
   CLEARING_HOUSE_ENDPOINT,
   SECONDS_IN_DAY,
-  SECONDS_IN_HOUR,
   SHOP_AMM_ENDPOINT,
   TUPLE_FIRST_INDEX,
+  TUPLE_SECOND_INDEX,
   ZERO_AMOUNT,
 } from './constants';
 import { calculatePercentageChange, toReal } from './utils/helpers';
@@ -78,9 +78,10 @@ export class AppService {
       marketPriceChangePercentage: '0',
       marketPriceChange24Usd: '0',
       indexPriceUsd:
-        aaplFundingRates[aaplFundingRates.length - 1]?.underlyingPrice ?? '0',
+        aaplFundingRates[TUPLE_FIRST_INDEX]?.underlyingPrice ?? '0',
       indexPriceChange24Usd: '0',
-      fundingRate: aaplFundingRates[aaplFundingRates.length - 1]?.rate ?? '0',
+      indexPriceChangePercentage: '0',
+      fundingRate: aaplFundingRates[TUPLE_FIRST_INDEX]?.rate ?? '0',
       fundingRateChangePercentage: '0',
     };
 
@@ -92,10 +93,10 @@ export class AppService {
       ).toFixed(),
       marketPriceChangePercentage: '0',
       marketPriceChange24Usd: '0',
-      indexPriceUsd:
-        amdFundingRates[amdFundingRates.length - 1]?.underlyingPrice ?? '0',
+      indexPriceUsd: amdFundingRates[TUPLE_FIRST_INDEX]?.underlyingPrice ?? '0',
       indexPriceChange24Usd: '0',
-      fundingRate: amdFundingRates[amdFundingRates.length - 1]?.rate ?? '0',
+      indexPriceChangePercentage: '0',
+      fundingRate: amdFundingRates[TUPLE_FIRST_INDEX]?.rate ?? '0',
       fundingRateChangePercentage: '0',
     };
 
@@ -108,9 +109,10 @@ export class AppService {
       marketPriceChangePercentage: '0',
       marketPriceChange24Usd: '0',
       indexPriceUsd:
-        shopFundingRates[shopFundingRates.length - 1]?.underlyingPrice ?? '0',
+        shopFundingRates[TUPLE_FIRST_INDEX]?.underlyingPrice ?? '0',
       indexPriceChange24Usd: '0',
-      fundingRate: shopFundingRates[shopFundingRates.length - 1]?.rate ?? '0',
+      indexPriceChangePercentage: '0',
+      fundingRate: shopFundingRates[TUPLE_FIRST_INDEX]?.rate ?? '0',
       fundingRateChangePercentage: '0',
     };
 
@@ -183,6 +185,22 @@ export class AppService {
       this.calculateHourlyFundingRateChangePercantage(
         shopFundingRates,
         shopResponse.fundingRate,
+      );
+
+    aaplResponse.indexPriceChangePercentage =
+      this.calculateHourlyIndexPriceChangePercantage(
+        aaplFundingRates,
+        aaplResponse.indexPriceUsd,
+      );
+    amdResponse.indexPriceChangePercentage =
+      this.calculateHourlyIndexPriceChangePercantage(
+        amdFundingRates,
+        amdResponse.indexPriceUsd,
+      );
+    shopResponse.indexPriceChangePercentage =
+      this.calculateHourlyIndexPriceChangePercantage(
+        shopFundingRates,
+        shopResponse.indexPriceUsd,
       );
 
     return [aaplResponse, amdResponse, shopResponse];
@@ -330,20 +348,31 @@ export class AppService {
     fundingRates: Array<IFundingRate>,
     currentFudingRate: string,
   ) {
-    if (fundingRates.length === 0) {
+    if (fundingRates.length < 2) {
       return '0';
     }
 
-    const hourAgoDate = new BigNumber(
-      fundingRates[TUPLE_FIRST_INDEX].date,
-    ).minus(SECONDS_IN_HOUR);
-    const hourAgoPosition = fundingRates.find(({ date }) =>
-      new BigNumber(date).isLessThanOrEqualTo(hourAgoDate),
-    );
+    const hourAgoPosition = fundingRates[TUPLE_SECOND_INDEX];
 
     return calculatePercentageChange(
       new BigNumber(hourAgoPosition?.rate ?? '0'),
       new BigNumber(currentFudingRate),
+    );
+  }
+
+  private calculateHourlyIndexPriceChangePercantage(
+    fundingRates: Array<IFundingRate>,
+    currentIndexPrice: string,
+  ) {
+    if (fundingRates.length < 2) {
+      return '0';
+    }
+
+    const hourAgoPosition = fundingRates[TUPLE_SECOND_INDEX];
+
+    return calculatePercentageChange(
+      new BigNumber(hourAgoPosition?.underlyingPrice ?? '0'),
+      new BigNumber(currentIndexPrice),
     );
   }
 
